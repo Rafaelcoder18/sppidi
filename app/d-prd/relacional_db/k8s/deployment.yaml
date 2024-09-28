@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sppidi-relacional-db-v1
+  namespace: d-prd
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sppidi-relacional-db-v1
+  template:
+    metadata:
+      labels:
+        app: sppidi-relacional-db-v1
+    spec:
+      containers:
+      - name: sppidi-relacional-db-v1
+        image: ghcr.io/rafaelcoder18/sppidi_relacional_database:1.0
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: root
+        - name: POSTGRES_PASSWORD
+          value: root
+        - name: POSTGRES_DB
+          value: sppidi
+        volumeMounts:
+        - mountPath: "/var/lib/data" 
+          name: sppidi-storage
+      volumes:
+      - name: sppidi-storage
+        persistentVolumeClaim:
+          claimName: sppidi-pvc 
+      imagePullSecrets:
+      - name: ghcr-secret
+

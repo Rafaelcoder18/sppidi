@@ -1,0 +1,33 @@
+2024-09-28T17:53:45.777	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175345 | - | - | [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-09-28T17:53:45.777	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175345 | - | - | [33mPress CTRL+C to quit[0m
+2024-09-28T17:53:45.779	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175345 | - | - |  * Restarting with stat
+2024-09-28T17:53:46.752	[33mWARNING[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175346 | - | - |  * Debugger is active!
+2024-09-28T17:53:46.841	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175346 | - | - |  * Debugger PIN: 925-720-049
+2024-09-28T17:54:00.158	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175400 | - | - | This is an info log
+2024-09-28T17:54:00.159	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175400 | - | - | 127.0.0.1 - - [28/Sep/2024 17:54:00] "POST /log HTTP/1.1" 200 -
+2024-09-28T17:54:41.184	[33mWARNING[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 43
+2024-09-28T17:54:41.185	[33mWARNING[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 11
+2024-09-28T17:54:41.185	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 84
+2024-09-28T17:54:41.185	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 27
+2024-09-28T17:54:41.185	[33mWARNING[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 85
+2024-09-28T17:54:41.186	[33mWARNING[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 89
+2024-09-28T17:54:41.186	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 37
+2024-09-28T17:54:41.186	[34mINFO[0m	MangoSC | Mango-software-cam-pf | PMID | d-prd | - | orch-auth-user | 20240928175441 | - | - | Random log message 9
+2024-09-28T17:56:51.876	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 26
+2024-09-28T17:56:51.876	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 67
+2024-09-28T17:56:51.877	[31mERROR[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 75
+2024-09-28T17:56:51.877	[31mERROR[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 91
+2024-09-28T17:56:51.877	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 45
+2024-09-28T17:56:51.877	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 35
+2024-09-28T17:56:51.877	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 88
+2024-09-28T17:56:51.878	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175651 | - | - | Random log message 14
+2024-09-28T17:59:15.779	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 91
+2024-09-28T17:59:15.780	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 35
+2024-09-28T17:59:15.780	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 83
+2024-09-28T17:59:15.780	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 63
+2024-09-28T17:59:15.781	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 6
+2024-09-28T17:59:15.781	[33mWARNING[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 92
+2024-09-28T17:59:15.781	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 50
+2024-09-28T17:59:15.781	[34mINFO[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 66
+2024-09-28T17:59:15.782	[31mERROR[0m	MangoSC | sensor-pf-interaction | SPPIDI_ENV | b-prd | - | orch-auth-user | 20240928175915 | - | - | Random log message 26

@@ -2,7 +2,7 @@ FROM postgres:17beta3-alpine3.19
 
 ENV POSTGRES_USER=$POSTGRES_USER \
     POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-    POSTGRES_DB=$POSTGRES_PASSWORD
+    POSTGRES_DB=$POSTGRES_DB
 
 COPY ./init.sql /docker-entrypoint-initdb.d/
 

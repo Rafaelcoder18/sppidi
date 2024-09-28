@@ -20,21 +20,21 @@ clientes pessoa física
     - Número
 */
 
-DROP TABLE IF EXISTIS unique_person;
-CREATE TABLE IF NOT EXISTIS unique_person(
-    cpf CHAR(8) PRIMARY KEY;
-    full_name VARCHAR(255) REQUIRED,
-    phone_numer CHAR(13) REQUIRED,
-    first_contact_name VARCHAR(255) REQUIRED,
-    first_contact_phone_numer CHAR(13) REQUIRED,
-    second_contact_name VARCHAR(255) REQUIRED,
-    second_contact_phone_numer CHAR(13) REQUIRED,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    contract_id VARCHAR(255) UNIQUE REQUIRED,
-    user_name VARCHAR(255) UNIQUE REQUIRED,
-    user_password VARCHAR(255) REQUIRED,
-    zip_code CHAR(8) REQUIRED,
-    address_number INT REQUIRED    
+DROP TABLE IF EXISTS unique_person;
+CREATE TABLE IF NOT EXISTS unique_person(
+    cpf CHAR(8) PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    phone_numer CHAR(13) NOT NULL,
+    first_contact_name VARCHAR(255) NOT NULL,
+    first_contact_phone_numer CHAR(13) NOT NULL,
+    second_contact_name VARCHAR(255) NOT NULL,
+    second_contact_phone_numer CHAR(13) NOT NULL,
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    contract_id VARCHAR(255) UNIQUE NOT NULL,
+    user_name VARCHAR(255) UNIQUE NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    zip_code CHAR(8) NOT NULL,
+    address_number INT NOT NULL    
 );
 
 /*
@@ -51,13 +51,13 @@ Sensores de presença & Sensor de barreira
     - Tempo de alarmistica
 */
 
-DROP TABLE IF EXISTIS unique_person_sensor;
-CREATE TABLE IF NOT EXISTIS unique_person_sensor(
+DROP TABLE IF EXISTS unique_person_sensor;
+CREATE TABLE IF NOT EXISTS unique_person_sensor(
     sensor_id VARCHAR(255) PRIMARY KEY,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    sensor_description VARCHAR(255) REQUIRED,
-    sensor_model VARCHAR(255) REQUIRED,
-    alarmistic_time TIMESTAMP REQUIRED  
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    sensor_description VARCHAR(255) NOT NULL,
+    sensor_model VARCHAR(255) NOT NULL,
+    alarmistic_time TIMESTAMP NOT NULL  
 );
 
 
@@ -74,12 +74,12 @@ Câmeras de segurança
     - Descrição da câmera
 */
 
-DROP TABLE IF EXISTIS unique_person_cam;
-CREATE TABLE IF NOT EXISTIS unique_person_cam(
+DROP TABLE IF EXISTS unique_person_cam;
+CREATE TABLE IF NOT EXISTS unique_person_cam(
     cam_id VARCHAR(255) PRIMARY KEY,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    cam_description VARCHAR(255) REQUIRED,
-    cam_model VARCHAR(255) REQUIRED
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    cam_description VARCHAR(255) NOT NULL,
+    cam_model VARCHAR(255) NOT NULL
 );
 
 
@@ -100,12 +100,12 @@ Contrato PJ
     - Descrição do contrato
 */
 
-DROP TABLE IF EXISTIS business_contract;
-CREATE TABLE IF NOT EXISTIS business_contract(
+DROP TABLE IF EXISTS business_contract;
+CREATE TABLE IF NOT EXISTS business_contract(
     contract_id BIGINT PRIMARY KEY,
-    contract_name VARCHAR(255) REQUIRED,
-    contract_company CHAR(14) UNIQUE REQUIRED,
-    effective_date TIMESTAMP REQUIRED
+    contract_name VARCHAR(255) NOT NULL,
+    contract_company CHAR(14) UNIQUE NOT NULL,
+    effective_date TIMESTAMP NOT NULL
 );
 
 
@@ -127,17 +127,17 @@ Administradores
     - Número
 */
 
-DROP TABLE IF EXISTIS company_manager;
-CREATE TABLE IF NOT EXISTIS company_manager(
-    cnpj CHAR(14) PRIMARY KEY;
+DROP TABLE IF EXISTS company_manager;
+CREATE TABLE IF NOT EXISTS company_manager(
+    cnpj CHAR(14) PRIMARY KEY,
     social_reason VARCHAR(255) UNIQUE,
-    create_time TIMESTAMP REQUIRED,
-    contract_id INT UNIQUE REQUIRED,
-    email VARCHAR(255) UNIQUE REQUIRED,
-    user_name VARCHAR(255) UNIQUE REQUIRED,
-    user_password VARCHAR(255) REQUIRED,
-    zip_code CHAR(8) REQUIRED,
-    address_number INT REQUIRED
+    create_time TIMESTAMP NOT NULL,
+    contract_id INT UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    user_name VARCHAR(255) UNIQUE NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    zip_code CHAR(8) NOT NULL,
+    address_number INT NOT NULL
 );
 
 /*
@@ -155,14 +155,14 @@ Gerentes
     - CNPJ atrelado
 */
 
-DROP TABLE IF EXISTIS customer_responsible;
-CREATE TABLE IF NOT EXISTIS customer_responsible(
-    cpf CHAR(8) PRIMARY KEY;
-    full_name VARCHAR(255) REQUIRED,
-    email VARCHAR(255) UNIQUE REQUIRED,
-    user_name VARCHAR(255) UNIQUE REQUIRED,
-    user_password VARCHAR(255) REQUIRED,
-    company CHAR(14) REQUIRED,
+DROP TABLE IF EXISTS customer_responsible;
+CREATE TABLE IF NOT EXISTS customer_responsible(
+    cpf CHAR(8) PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    user_name VARCHAR(255) UNIQUE NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    company CHAR(14) NOT NULL
 );
 
 
@@ -187,19 +187,19 @@ clientes pessoa jurídica
 */
 
 
-DROP TABLE IF EXISTIS juridic_person;
-CREATE TABLE IF NOT EXISTIS juridic_person(
-    cnpj CHAR(14) PRIMARY KEY;
-    social_reason VARCHAR(255) REQUIRED,
-    phone_numer CHAR(13) REQUIRED,
-    first_contact_name VARCHAR(255) REQUIRED,
-    first_contact_phone_numer CHAR(13) REQUIRED,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    contract_id VARCHAR(255) UNIQUE REQUIRED,
-    user_name VARCHAR(255) UNIQUE REQUIRED,
-    user_password VARCHAR(255) REQUIRED,
-    zip_code CHAR(8) REQUIRED,
-    address_number INT REQUIRED    
+DROP TABLE IF EXISTS juridic_person;
+CREATE TABLE IF NOT EXISTS juridic_person(
+    cnpj CHAR(14) PRIMARY KEY,
+    social_reason VARCHAR(255) NOT NULL,
+    phone_numer CHAR(13) NOT NULL,
+    first_contact_name VARCHAR(255) NOT NULL,
+    first_contact_phone_numer CHAR(13) NOT NULL,
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    contract_id VARCHAR(255) UNIQUE NOT NULL,
+    user_name VARCHAR(255) UNIQUE NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    zip_code CHAR(8) NOT NULL,
+    address_number INT NOT NULL    
 );
 
 
@@ -222,16 +222,16 @@ Condominios
 */
 
 
-DROP TABLE IF EXISTIS condominium;
-CREATE TABLE IF NOT EXISTIS condominium(
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    condominium_id VARCHAR(255) UNIQUE REQUIRED,
-    first_contact_name VARCHAR(255) REQUIRED,
-    first_contact_phone_numer CHAR(13) REQUIRED,
-    second_contact_name VARCHAR(255) REQUIRED,
-    second_contact_phone_numer CHAR(13) REQUIRED,
-    zip_code CHAR(8) REQUIRED,
-    address_number INT REQUIRED    
+DROP TABLE IF EXISTS condominium;
+CREATE TABLE IF NOT EXISTS condominium(
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    condominium_id VARCHAR(255) UNIQUE NOT NULL,
+    first_contact_name VARCHAR(255) NOT NULL,
+    first_contact_phone_numer CHAR(13) NOT NULL,
+    second_contact_name VARCHAR(255) NOT NULL,
+    second_contact_phone_numer CHAR(13) NOT NULL,
+    zip_code CHAR(8) NOT NULL,
+    address_number INT NOT NULL    
 );
 
 /*
@@ -248,13 +248,13 @@ Sensores de presença & Sensor de barreira
     - Tempo de alarmistica
 */
 
-DROP TABLE IF EXISTIS juridic_person_sensor;
-CREATE TABLE IF NOT EXISTIS juridic_person_sensor(
+DROP TABLE IF EXISTS juridic_person_sensor;
+CREATE TABLE IF NOT EXISTS juridic_person_sensor(
     sensor_id VARCHAR(255) PRIMARY KEY,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    sensor_description VARCHAR(255) REQUIRED,
-    sensor_model VARCHAR(255) REQUIRED,
-    alarmistic_time TIMESTAMP REQUIRED  
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    sensor_description VARCHAR(255) NOT NULL,
+    sensor_model VARCHAR(255) NOT NULL,
+    alarmistic_time TIMESTAMP NOT NULL  
 );
 
 
@@ -271,10 +271,10 @@ Câmeras de segurança
     - Descrição da câmera
 */
 
-DROP TABLE IF EXISTIS juridic_person_cam;
-CREATE TABLE IF NOT EXISTIS juridic_person_cam(
+DROP TABLE IF EXISTS juridic_person_cam;
+CREATE TABLE IF NOT EXISTS juridic_person_cam(
     cam_id VARCHAR(255) PRIMARY KEY,
-    client_id VARCHAR(255) UNIQUE REQUIRED,
-    cam_description VARCHAR(255) REQUIRED,
-    cam_model VARCHAR(255) REQUIRED
+    client_id VARCHAR(255) UNIQUE NOT NULL,
+    cam_description VARCHAR(255) NOT NULL,
+    cam_model VARCHAR(255) NOT NULL
 );
