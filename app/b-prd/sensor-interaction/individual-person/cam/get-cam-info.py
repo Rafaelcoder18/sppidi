@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 import psycopg2
 import os, json
+import threading
 
 # Configuração do logger com formatação personalizada
 class CustomFormatter(logging.Formatter):
@@ -64,6 +65,9 @@ db_connection = psycopg2.connect(host=db_postgres_host,
                                 )
 cursor = db_connection.cursor()
 
+def send_logs_es(doc):
+    resp = client.index(index=INDEX_NAME, document=doc)
+
 @app.route('/access/v1/r-cam-unique-person-info', methods=['POST'])
 def svc_r_cam_info():
     start_time = datetime.now()  # Captura o início da execução
@@ -107,11 +111,8 @@ def svc_r_cam_info():
         'tid': message_id,
         'serviceName': 'r-cam-unique-person-info',
     }
-    try:
-        resp = client.index(index=INDEX_NAME, document=doc)
-        print(f"Log enviado com sucesso: {resp['result']}")
-    except Exception as e:
-        logger.error(f'{message_id} | - | {str(e)}')
+    thread = threading.Thread(target=send_logs_es, args=(doc,))
+    thread.start()
                 
     logger.info(f'{message_id} | - | requestBodyReceive | - | {body}')
     doc = {
@@ -122,11 +123,8 @@ def svc_r_cam_info():
         'tid': message_id,
         'serviceName': 'r-cam-unique-person-info',
     }
-    try:
-        resp = client.index(index=INDEX_NAME, document=doc)
-        print(f"Log enviado com sucesso: {resp['result']}")
-    except Exception as e:
-        logger.error(f'{message_id} | - | {str(e)}')
+    thread = threading.Thread(target=send_logs_es, args=(doc,))
+    thread.start()
         
     
     if ('cam_id' not in body) or ('client_id' not in body):
@@ -152,11 +150,8 @@ def svc_r_cam_info():
         'tid': message_id,
         'serviceName': 'r-cam-unique-person-info',
     }
-    try:
-        resp = client.index(index=INDEX_NAME, document=doc)
-        print(f"Log enviado com sucesso: {resp['result']}")
-    except Exception as e:
-        logger.error(f'{message_id} | - | {str(e)}')
+    thread = threading.Thread(target=send_logs_es, args=(doc,))
+    thread.start()
         
     try:
         cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
@@ -169,11 +164,8 @@ def svc_r_cam_info():
             'tid': message_id,
             'serviceName': 'r-cam-unique-person-info',
         }
-        try:
-            resp = client.index(index=INDEX_NAME, document=doc)
-            print(f"Log enviado com sucesso: {resp['result']}")
-        except Exception as e:
-            logger.error(f'{message_id} | - | {str(e)}')
+        thread = threading.Thread(target=send_logs_es, args=(doc,))
+        thread.start()
     except Exception as e:
         response_error = str(e)
         doc = {
@@ -184,11 +176,8 @@ def svc_r_cam_info():
             'tid': message_id,
             'serviceName': 'r-cam-unique-person-info',
         }
-        try:
-            resp = client.index(index=INDEX_NAME, document=doc)
-            print(f"Log enviado com sucesso: {resp['result']}")
-        except Exception as e:
-            logger.error(f'{message_id} | - | {str(e)}')
+        thread = threading.Thread(target=send_logs_es, args=(doc,))
+        thread.start()
         logger.error(f'{message_id} | - | payloadReturn | - | {response_error}')
         logger.error(f'{message_id} | - | httpStatus | - | 500')
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
@@ -211,11 +200,8 @@ def svc_r_cam_info():
         'serviceName': 'r-cam-unique-person-info',
         'totalTime': total_time,
     }
-    try:
-        resp = client.index(index=INDEX_NAME, document=doc)
-        print(f"Log enviado com sucesso: {resp['result']}")
-    except Exception as e:
-        logger.error(f'{message_id} | - | {str(e)}')
+    thread = threading.Thread(target=send_logs_es, args=(doc,))
+    thread.start()
     logger.info(f'{message_id} | - | payloadReturn | - | {cam_info}')
     logger.info(f'{message_id} | - | httpStatus | - | 200')
     total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
