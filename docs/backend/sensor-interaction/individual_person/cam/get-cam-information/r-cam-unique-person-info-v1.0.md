@@ -36,7 +36,7 @@ Acessa: postgres relacional
     clientId: {client-id}
 
     {
-        "equipament_id": "?",
+        "cam_id": "?",
         "client_id": "?"
     }
 

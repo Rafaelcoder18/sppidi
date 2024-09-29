@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from elasticsearch7 import Elasticsearch as Elasticsearch7
 import logging
 from datetime import datetime
-import random
+import psycopg2
+import os, json
 
 # Configuração do logger com formatação personalizada
 class CustomFormatter(logging.Formatter):
@@ -44,31 +46,181 @@ logger.addHandler(file_handler)
 
 app = Flask(__name__)
 
-@app.route('/log', methods=['POST'])
-def log_message():
-    level = request.json.get('level', 'INFO')
-    message = request.json.get('message', 'No message provided')
-    
-    if level.upper() == 'INFO':
-        logger.info(message)
-    elif level.upper() == 'WARNING':
-        logger.warning(message)
-    elif level.upper() == 'DEBUG':
-        logger.debug(message)
-    elif level.upper() == 'ERROR':
-        logger.error(message)
-    else:
-        return jsonify({"error": "Invalid log level"}), 400
-    
-    return jsonify({"status": "Logged", "level": level, "message": message}), 200
+ES_HOST = 'http://192.168.15.4:9200'
+INDEX_NAME = 'backend'  # Nome do índice a ser criado
+client = Elasticsearch7([ES_HOST])
+VALID_CLIENT_IDS = ["client1", "client2", "client3"]
+db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
+db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
+db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
+db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
+db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
 
-@app.route('/generate-logs', methods=['POST'])
-def generate_logs():
-    for _ in range(10):  # Gera 10 logs aleatórios
-        level = random.choice(['DEBUG'])
-        message = f"Random log message {random.randint(1, 100)}"
-        logger.log(getattr(logging, level), message)
-    return jsonify({"status": "Logs generated"}), 200
+db_connection = psycopg2.connect(host=db_postgres_host,
+                                 port=db_postgres_port,
+                                 user=db_postgres_user,
+                                 password=db_postgres_password,
+                                 database=db_postgres_database
+                                )
+cursor = db_connection.cursor()
+
+@app.route('/access/v1/r-cam-unique-person-info', methods=['POST'])
+def svc_r_cam_info():
+    start_time = datetime.now()  # Captura o início da execução
+    message_id = request.headers.get('messageId', None)
+    header_client_id = request.headers.get('clientId', None)
+    if message_id == None:
+        error_message = {'error':'Missing Transaction ID'}
+        logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.error(f'{message_id} | - | httpStatus | - | 400')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return jsonify(error_message), 400  
+    if header_client_id == None:
+        error_message = {'error':'Missing Client ID'}
+        logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.error(f'{message_id} | - | httpStatus | - | 400')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return jsonify(error_message), 400  
+    if header_client_id not in VALID_CLIENT_IDS:
+        error_message = {'error':'Invalid Client ID'}
+        logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.error(f'{message_id} | - | httpStatus | - | 400')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return jsonify(error_message), 400  
+    
+    logger.info(f'{message_id} | - | requestStarting')
+    body = request.json
+    headers = request.headers
+    header_info = ''
+    for header, value in headers.items():
+        header_info += (f'"{header}":"{value}",')
+
+    doc = {
+        'timestamp': datetime.now(),
+        'author': f'author_',
+        'environment': 'b-prd',
+        'providerHeaderReceived': header_info,
+        'requestMethod': 'POST',
+        'tid': message_id,
+        'serviceName': 'r-cam-unique-person-info',
+    }
+    try:
+        resp = client.index(index=INDEX_NAME, document=doc)
+        print(f"Log enviado com sucesso: {resp['result']}")
+    except Exception as e:
+        logger.error(f'{message_id} | - | {str(e)}')
+                
+    logger.info(f'{message_id} | - | requestBodyReceive | - | {body}')
+    doc = {
+        'timestamp': datetime.now(),
+        'author': f'author_',
+        'environment': 'b-prd',
+        'requestPayloadReceived': json.dumps(body),
+        'tid': message_id,
+        'serviceName': 'r-cam-unique-person-info',
+    }
+    try:
+        resp = client.index(index=INDEX_NAME, document=doc)
+        print(f"Log enviado com sucesso: {resp['result']}")
+    except Exception as e:
+        logger.error(f'{message_id} | - | {str(e)}')
+        
+    
+    if ('cam_id' not in body) or ('client_id' not in body):
+        error_message = {'error':'Missing mandatory fields'}
+        logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.error(f'{message_id} | - | httpStatus | - | 400')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return jsonify(error_message), 400   
+    
+    logger.debug(f'{message_id} | - | starting body conversion to variables')
+    cam_id = body.get('cam_id')
+    request_client_id = body.get('client_id')
+    logger.debug(f'{message_id} | - | body converted to variables')
+    
+    logger.info(f'{message_id} | - | starting select data from database')
+    
+    doc = {
+        'timestamp': datetime.now(),
+        'author': f'author_',
+        'environment': 'b-prd',
+        'text': 'starting query into database',
+        'tid': message_id,
+        'serviceName': 'r-cam-unique-person-info',
+    }
+    try:
+        resp = client.index(index=INDEX_NAME, document=doc)
+        print(f"Log enviado com sucesso: {resp['result']}")
+    except Exception as e:
+        logger.error(f'{message_id} | - | {str(e)}')
+        
+    try:
+        cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
+        cam_info = (cursor.fetchall())
+        doc = {
+            'timestamp': datetime.now(),
+            'author': f'author_',
+            'environment': 'b-prd',
+            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'tid': message_id,
+            'serviceName': 'r-cam-unique-person-info',
+        }
+        try:
+            resp = client.index(index=INDEX_NAME, document=doc)
+            print(f"Log enviado com sucesso: {resp['result']}")
+        except Exception as e:
+            logger.error(f'{message_id} | - | {str(e)}')
+    except Exception as e:
+        response_error = str(e)
+        doc = {
+            'timestamp': datetime.now(),
+            'author': f'author_',
+            'environment': 'b-prd',
+            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'tid': message_id,
+            'serviceName': 'r-cam-unique-person-info',
+        }
+        try:
+            resp = client.index(index=INDEX_NAME, document=doc)
+            print(f"Log enviado com sucesso: {resp['result']}")
+        except Exception as e:
+            logger.error(f'{message_id} | - | {str(e)}')
+        logger.error(f'{message_id} | - | payloadReturn | - | {response_error}')
+        logger.error(f'{message_id} | - | httpStatus | - | 500')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return ({'response':f'{response_error}'}), 500
+    if not cam_info:
+        logger.info(f'{message_id} | - | payloadReturn | - | ')
+        logger.info(f'{message_id} | - | httpStatus | - | 204')
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return ({'response':f'{cam_info}'}), 204
+         
+    total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+    doc = {
+        'timestamp': datetime.now(),
+        'author': f'author_',
+        'environment': 'b-prd',
+        'requestPayloadReturned': json.dumps({'response':f'{cam_info}'}),
+        'tid': message_id,
+        'serviceName': 'r-cam-unique-person-info',
+        'totalTime': total_time,
+    }
+    try:
+        resp = client.index(index=INDEX_NAME, document=doc)
+        print(f"Log enviado com sucesso: {resp['result']}")
+    except Exception as e:
+        logger.error(f'{message_id} | - | {str(e)}')
+    logger.info(f'{message_id} | - | payloadReturn | - | {cam_info}')
+    logger.info(f'{message_id} | - | httpStatus | - | 200')
+    total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+    logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+    return ({'response':f'{cam_info}'}), 200
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
