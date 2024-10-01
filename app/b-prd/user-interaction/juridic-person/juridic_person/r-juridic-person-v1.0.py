@@ -5,6 +5,7 @@ from datetime import datetime
 import psycopg2
 import os, json
 import threading
+from time import sleep
 
 # Configuração do logger com formatação personalizada
 class CustomFormatter(logging.Formatter):
@@ -60,7 +61,7 @@ db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
 db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
 db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
 
-serviceName = os.environ.get('SVC-NAME', 'r-cam-unique-person-info')
+serviceName = os.environ.get('SVC-NAME', 'r-juridic-person')
 
 db_connection = psycopg2.connect(host=db_postgres_host,
                                  port=db_postgres_port,
@@ -68,12 +69,13 @@ db_connection = psycopg2.connect(host=db_postgres_host,
                                  password=db_postgres_password,
                                  database=db_postgres_database
                                 )
+db_connection.autocommit = True
 cursor = db_connection.cursor()
 
 def send_logs_es(doc):
     client.index(index=es_index, document=doc)
 
-@app.route('/access/v1/r-cam-unique-person-info', methods=['POST'])
+@app.route('/access/v1/r-juridic-person', methods=['POST'])
 def svc_r_cam_info():
     start_time = datetime.now()  # Captura o início da execução
     message_id = request.headers.get('messageId', None)
@@ -197,37 +199,42 @@ def svc_r_cam_info():
     thread.start()
         
     
-    if ('cam_id' not in body) or ('client_id' not in body):
-        doc = {
-            'timestamp': datetime.now(),
-            'environment': 'b-prd',
-            'providerHeaderReceived': header_info,
-            'requestMethod': 'POST',
-            'tid': message_id,
-            'serviceName': f'{serviceName}',
-        }
-        thread = threading.Thread(target=send_logs_es, args=(doc,))
-        thread.start()
-        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
-        doc = {
-            'timestamp': datetime.now(),
-            'environment': 'b-prd',
-            'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
-            'tid': message_id,
-            'serviceName': f'{serviceName}',
-            'totalTime': total_time,
-            'responseHttpStatus': 400
-        }
-        error_message = {'error':'Missing mandatory fields'}
-        logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
-        logger.error(f'{message_id} | - | httpStatus | - | 400')
-        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
-        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-        return jsonify(error_message), 400   
+    if 'cnpj' not in body:
+        if 'social_reason' not in body:   
+            error_message = {'error':'Missing mandatory fields'}
+            doc = {
+                'timestamp': datetime.now(),
+                'environment': 'b-prd',
+                'providerHeaderReceived': header_info,
+                'requestMethod': 'POST',
+                'tid': message_id,
+                'serviceName': f'{serviceName}',
+            }
+            thread = threading.Thread(target=send_logs_es, args=(doc,))
+            thread.start()
+            total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+            doc = {
+                'timestamp': datetime.now(),
+                'environment': 'b-prd',
+                'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
+                'tid': message_id,
+                'serviceName': f'{serviceName}',
+                'totalTime': total_time,
+                'responseHttpStatus': 400
+            }
+            logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+            logger.error(f'{message_id} | - | httpStatus | - | 400')
+            total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+            logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+            return jsonify(error_message), 400   
     
     logger.debug(f'{message_id} | - | starting body conversion to variables')
-    cam_id = body.get('cam_id')
-    request_client_id = body.get('client_id')
+    if 'cnpj' not in body:
+        social_reason = body.get('social_reason')
+    if 'social_reason' not in body: 
+        cnpj = body.get('cnpj')
+
+       
     logger.debug(f'{message_id} | - | body converted to variables')
     
     logger.info(f'{message_id} | - | starting select data from database')
@@ -243,15 +250,66 @@ def svc_r_cam_info():
     thread.start()
         
     try:
-        cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
-        cam_info = (cursor.fetchall())
-        doc = {
-            'timestamp': datetime.now(),
-            'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
-            'tid': message_id,
-            'serviceName': serviceName,
-        }
+        if 'social_reason' not in body: 
+            cursor.execute(f"SELECT * FROM juridic_person WHERE cnpj='{cnpj}'")
+        if 'cnpj' not in body: 
+            cursor.execute(f"SELECT * FROM juridic_person WHERE social_reason='{social_reason}'")
+        try:
+            client_response = cursor.fetchone()
+        except:
+            client_response = []
+        if client_response == None:
+            response_error = {"error":"cliente inexistente"}
+            if 'social_reason' not in body: 
+                doc = {
+                    'timestamp': datetime.now(),
+                    'environment': 'b-prd',
+                    'text': f"SELECT * FROM juridic_person WHERE cnpj='{cnpj}'",
+                    'tid': message_id,
+                    'serviceName': serviceName,
+                }
+            else:
+                doc = {
+                    'timestamp': datetime.now(),
+                    'environment': 'b-prd',
+                    'text': f"SELECT * FROM juridic_person WHERE social_reason='{social_reason}'",
+                    'tid': message_id,
+                    'serviceName': serviceName,
+                }
+            thread = threading.Thread(target=send_logs_es, args=(doc,))
+            thread.start()
+            sleep(0.001)
+            doc = {
+                'timestamp': datetime.now(),
+                'environment': 'b-prd',
+                'requestPayloadReturned': f"{response_error}",
+                'tid': message_id,
+                'serviceName': serviceName,
+                'responseHttpStatus': 404
+            }
+            thread = threading.Thread(target=send_logs_es, args=(doc,))
+            thread.start()
+            logger.error(f'{message_id} | - | payloadReturn | - | {response_error}')
+            logger.error(f'{message_id} | - | httpStatus | - | 404')
+            total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+            logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+            return ({'response':f'{response_error}'}), 404
+        if 'social_reason' not in body: 
+            doc = {
+                'timestamp': datetime.now(),
+                'environment': 'b-prd',
+                'text': f"SELECT * FROM juridic_person WHERE cnpj='{cnpj}'",
+                'tid': message_id,
+                'serviceName': serviceName,
+            }
+        else:
+            doc = {
+                'timestamp': datetime.now(),
+                'environment': 'b-prd',
+                'text': f"SELECT * FROM juridic_person WHERE social_reason='{social_reason}'",
+                'tid': message_id,
+                'serviceName': serviceName,
+            }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
     except Exception as e:
@@ -259,7 +317,7 @@ def svc_r_cam_info():
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': response_error,
             'tid': message_id,
             'serviceName': serviceName,
             'responseHttpStatus': 500
@@ -271,29 +329,13 @@ def svc_r_cam_info():
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
         logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
         return ({'response':f'{response_error}'}), 500
-    if not cam_info:
-        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
-        doc = {
-            'timestamp': datetime.now(),
-            'environment': 'b-prd',
-            'requestPayloadReturned': '',
-            'tid': message_id,
-            'serviceName': serviceName,
-            'totalTime': total_time,
-            'responseHttpStatus': 204
-        }
-        thread = threading.Thread(target=send_logs_es, args=(doc,))
-        thread.start()
-        logger.info(f'{message_id} | - | payloadReturn | - | ')
-        logger.info(f'{message_id} | - | httpStatus | - | 204')
-        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-        return ({'response':f'{cam_info}'}), 204
          
     total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+    response = {'success': f'{client_response}'}
     doc = {
         'timestamp': datetime.now(),
         'environment': 'b-prd',
-        'requestPayloadReturned': json.dumps({'response':f'{cam_info}'}),
+        'requestPayloadReturned': json.dumps(response),
         'tid': message_id,
         'serviceName': serviceName,
         'totalTime': total_time,
@@ -301,11 +343,11 @@ def svc_r_cam_info():
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
-    logger.info(f'{message_id} | - | payloadReturn | - | {cam_info}')
+    logger.info(f'{message_id} | - | payloadReturn | - | {response}')
     logger.info(f'{message_id} | - | httpStatus | - | 200')
     total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
     logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-    return ({'response':f'{cam_info}'}), 200
+    return response, 200
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)

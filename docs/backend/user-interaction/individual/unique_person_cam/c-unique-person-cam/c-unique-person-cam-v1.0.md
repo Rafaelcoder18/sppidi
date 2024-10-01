@@ -31,7 +31,7 @@ Acessa: postgres relacional
 ## Mensagem de requisição
 
 ```bash
-    POST http://server:port/v1/c-unique-person
+    POST http://server:port/v1/c-cam-unique-person
     messageId: {message-id}
     clientId: {client-id}
 

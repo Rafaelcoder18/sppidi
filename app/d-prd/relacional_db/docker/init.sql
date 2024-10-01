@@ -56,8 +56,7 @@ CREATE TABLE IF NOT EXISTS unique_person_sensor(
     sensor_id VARCHAR(255) PRIMARY KEY,
     client_id VARCHAR(255) UNIQUE NOT NULL,
     sensor_description VARCHAR(255) NOT NULL,
-    sensor_model VARCHAR(255) NOT NULL,
-    alarmistic_time TIMESTAMP NOT NULL  
+    sensor_model VARCHAR(255) NOT NULL
 );
 
 

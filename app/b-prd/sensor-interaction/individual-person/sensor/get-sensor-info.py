@@ -54,13 +54,13 @@ client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
 
+serviceName = os.environ.get('SVC-NAME', 'r-sensor-unique-person-info')
+
 db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
 db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
 db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
 db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
 db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
-
-serviceName = os.environ.get('SVC-NAME', 'r-cam-unique-person-info')
 
 db_connection = psycopg2.connect(host=db_postgres_host,
                                  port=db_postgres_port,
@@ -73,7 +73,7 @@ cursor = db_connection.cursor()
 def send_logs_es(doc):
     client.index(index=es_index, document=doc)
 
-@app.route('/access/v1/r-cam-unique-person-info', methods=['POST'])
+@app.route('/access/v1/r-sensor-unique-person-info', methods=['POST'])
 def svc_r_cam_info():
     start_time = datetime.now()  # Captura o início da execução
     message_id = request.headers.get('messageId', None)
@@ -197,7 +197,8 @@ def svc_r_cam_info():
     thread.start()
         
     
-    if ('cam_id' not in body) or ('client_id' not in body):
+    if ('sensor_id' not in body) or ('client_id' not in body):
+        error_message = {'error':'Missing mandatory fields'}
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
@@ -218,7 +219,6 @@ def svc_r_cam_info():
             'totalTime': total_time,
             'responseHttpStatus': 400
         }
-        error_message = {'error':'Missing mandatory fields'}
         logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
         logger.error(f'{message_id} | - | httpStatus | - | 400')
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
@@ -226,7 +226,7 @@ def svc_r_cam_info():
         return jsonify(error_message), 400   
     
     logger.debug(f'{message_id} | - | starting body conversion to variables')
-    cam_id = body.get('cam_id')
+    sensor_id = body.get('sensor_id')
     request_client_id = body.get('client_id')
     logger.debug(f'{message_id} | - | body converted to variables')
     
@@ -243,12 +243,12 @@ def svc_r_cam_info():
     thread.start()
         
     try:
-        cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
+        cursor.execute(f"SELECT * FROM unique_person_sensor WHERE sensor_id='{sensor_id}' AND client_id='{request_client_id}'")
         cam_info = (cursor.fetchall())
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"SELECT * FROM unique_person_sensor WHERE sensor_id='{sensor_id}' AND client_id='{request_client_id}'",
             'tid': message_id,
             'serviceName': serviceName,
         }
@@ -259,7 +259,17 @@ def svc_r_cam_info():
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"SELECT * FROM unique_person_sensor WHERE sensor_id='{sensor_id}' AND client_id='{request_client_id}'",
+            'tid': message_id,
+            'serviceName': serviceName,
+            'responseHttpStatus': 500
+        }
+        thread = threading.Thread(target=send_logs_es, args=(doc,))
+        thread.start()
+        doc = {
+            'timestamp': datetime.now(),
+            'environment': 'b-prd',
+            'requestPayloadReturned': json.dumps({'response':f'{response_error}'}),
             'tid': message_id,
             'serviceName': serviceName,
             'responseHttpStatus': 500

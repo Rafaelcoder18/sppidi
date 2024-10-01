@@ -54,13 +54,13 @@ client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
 
+serviceName = os.environ.get('SVC-NAME', 'r-sensor-juridic-person-info')
+
 db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
 db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
 db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
 db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
 db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
-
-serviceName = os.environ.get('SVC-NAME', 'r-cam-unique-person-info')
 
 db_connection = psycopg2.connect(host=db_postgres_host,
                                  port=db_postgres_port,
@@ -73,7 +73,7 @@ cursor = db_connection.cursor()
 def send_logs_es(doc):
     client.index(index=es_index, document=doc)
 
-@app.route('/access/v1/r-cam-unique-person-info', methods=['POST'])
+@app.route('/access/v1/r-sensor-juridic-person-info', methods=['POST'])
 def svc_r_cam_info():
     start_time = datetime.now()  # Captura o início da execução
     message_id = request.headers.get('messageId', None)
@@ -91,7 +91,7 @@ def svc_r_cam_info():
         'providerHeaderReceived': header_info,
         'requestMethod': 'POST',
         'tid': message_id,
-        'serviceName': serviceName,
+        'serviceName': f'{serviceName}',
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
@@ -103,7 +103,7 @@ def svc_r_cam_info():
             'providerHeaderReceived': header_info,
             'requestMethod': 'POST',
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
@@ -113,7 +113,7 @@ def svc_r_cam_info():
             'environment': 'b-prd',
             'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
             'totalTime': total_time,
             'responseHttpStatus': 400
         }
@@ -132,7 +132,7 @@ def svc_r_cam_info():
             'providerHeaderReceived': header_info,
             'requestMethod': 'POST',
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
@@ -142,7 +142,7 @@ def svc_r_cam_info():
             'environment': 'b-prd',
             'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
             'totalTime': total_time,
             'responseHttpStatus': 400
         }
@@ -161,7 +161,7 @@ def svc_r_cam_info():
             'providerHeaderReceived': header_info,
             'requestMethod': 'POST',
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
@@ -171,7 +171,7 @@ def svc_r_cam_info():
             'environment': 'b-prd',
             'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
             'totalTime': total_time,
             'responseHttpStatus': 401
         }
@@ -191,13 +191,14 @@ def svc_r_cam_info():
         'environment': 'b-prd',
         'requestPayloadReceived': json.dumps(body),
         'tid': message_id,
-        'serviceName': serviceName,
+        'serviceName': f'{serviceName}',
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
         
     
     if ('cam_id' not in body) or ('client_id' not in body):
+        error_message = {'error':'Missing mandatory fields'}
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
@@ -218,7 +219,8 @@ def svc_r_cam_info():
             'totalTime': total_time,
             'responseHttpStatus': 400
         }
-        error_message = {'error':'Missing mandatory fields'}
+        thread = threading.Thread(target=send_logs_es, args=(doc,))
+        thread.start()
         logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
         logger.error(f'{message_id} | - | httpStatus | - | 400')
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
@@ -237,20 +239,20 @@ def svc_r_cam_info():
         'environment': 'b-prd',
         'text': 'starting query into database',
         'tid': message_id,
-        'serviceName': serviceName,
+        'serviceName': f'{serviceName}',
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
         
     try:
-        cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
+        cursor.execute(f"SELECT * FROM juridic_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
         cam_info = (cursor.fetchall())
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"SELECT * FROM juridic_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
@@ -259,9 +261,9 @@ def svc_r_cam_info():
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"SELECT * FROM juridic_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
             'responseHttpStatus': 500
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
@@ -278,7 +280,7 @@ def svc_r_cam_info():
             'environment': 'b-prd',
             'requestPayloadReturned': '',
             'tid': message_id,
-            'serviceName': serviceName,
+            'serviceName': f'{serviceName}',
             'totalTime': total_time,
             'responseHttpStatus': 204
         }
@@ -295,7 +297,7 @@ def svc_r_cam_info():
         'environment': 'b-prd',
         'requestPayloadReturned': json.dumps({'response':f'{cam_info}'}),
         'tid': message_id,
-        'serviceName': serviceName,
+        'serviceName': f'{serviceName}',
         'totalTime': total_time,
         'responseHttpStatus': 200
     }

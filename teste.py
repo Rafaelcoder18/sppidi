@@ -39,6 +39,9 @@ def create_index(client, index_name):
                 "requestMethod": {
                     "type": "keyword"
                 },
+                "requestHeaderReceived": {
+                    "type": "text"
+                },
                 "requestPayloadReceived": {
                     "type": "text"
                 },
@@ -50,6 +53,9 @@ def create_index(client, index_name):
                 },
                 "tid": {
                     "type": "keyword"
+                },
+                "totalTime": {
+                    "type": "text"
                 },
                 "timestamp": {
                     "type": "date"
@@ -68,9 +74,9 @@ def create_index(client, index_name):
         print(f"Índice '{index_name}' já existe.")
 
 # Função para enviar logs ao Elasticsearch
-def send_log(client, doc_id):
+def send_log(client):
     doc = {
-        'author': f'author_{doc_id}',
+        'author': f'author_',
         'text': f'Interesting content {random.randint(1, 100)}...',
         'timestamp': datetime.now(),
         'environment': 'test',
@@ -78,6 +84,7 @@ def send_log(client, doc_id):
         'providerMsgReceived': 'Message received',
         'providerMsgSent': 'Message sent',
         'providerHeaderReceived': 'Header received',
+        'requestHeaderReceived': 'Header received',
         'requestMethod': 'GET',
         'requestPayloadReceived': 'Payload received',
         'requestPayloadReturned': 'Payload returned',
@@ -86,36 +93,14 @@ def send_log(client, doc_id):
         'serviceName': 'teste',
     }
     try:
-        resp = client.index(index=INDEX_NAME, id=doc_id, document=doc)
+        resp = client.index(index=INDEX_NAME, document=doc)
         print(f"Log enviado com sucesso: {resp['result']}")
     except Exception as e:
         print(f"Erro ao enviar log: {e}")
 
-# Função para enviar logs em threads
-def log_sender_thread(client, count, interval):
-    for i in range(4053, count):
-        send_log(client, i)
-        time.sleep(interval)
-
 # Função principal para criar o índice e enviar múltiplos logs
 def main():
     es_client = create_es_client(ES_HOST)
-
-    # Número de logs a enviar por segundo
-    logs_per_second = 400
-    total_logs = 500000  # Total de logs a enviar
-    interval = 1 / logs_per_second  # Intervalo entre envios
-
-    # Iniciar múltiplas threads para enviar logs
-    threads = []
-    for _ in range(1000):  # Número de threads
-        thread = threading.Thread(target=log_sender_thread, args=(es_client, total_logs // 10, interval))
-        threads.append(thread)
-        thread.start()
-
-    # Esperar todas as threads terminarem
-    for thread in threads:
-        thread.join()
-
+    create_index(es_client, INDEX_NAME)
 if __name__ == "__main__":
     main()
