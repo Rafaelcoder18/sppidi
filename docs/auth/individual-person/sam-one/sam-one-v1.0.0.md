@@ -7,7 +7,7 @@ Orquestrado por: Orch-user-sensor-interaction
 Acessado por (Rota interna): POST /access/v1/r-cam-unique-person-info
 
 ### Descrição
-    Serviço responsável por retornar informações de câmera de um cliente pessoa física.
+    Serviço responsável por validar informações enviadas no token JWT.
 
 Ambiente: Backend
 
@@ -36,8 +36,7 @@ Acessa: postgres relacional
     clientId: {client-id}
 
     {
-        "cam_id": "?",
-        "client_id": "?"
+        "tokenJWT":"?"
     }
 
     Obs.: O messageId e o clientId são parâmetros que devem ser enviado no Header Http.
@@ -65,30 +64,22 @@ HTTP Status
 HTTP/1.1 204
 
 {
-    "equipament_id": "?",
-    "client_id": "?"
-    "cam_description": "?",
-    "cam_model": "?"
+
 }
 ```
 
 
 ## Mapeamento de entrada
 
-|        Tag SPPIDIMW         |                  Desctição                 |     Obrigatório    |     Tipo de dado     |        Tag banco de dados       | Regra |
-|-----------------------------|--------------------------------------------|--------------------|----------------------|---------------------------------|-------|
-| equipament_id               | ID do equipamento cadastrado               | Sim                |  string              |  SENSOR_ID                      | -     |
-| client_id                   | ID do cliente responsável pelo equipamento | Sim                |  string              |  FULL_NAME                      | -     |
+|        Tag SPPIDIMW         |                  Desctição                 |     Obrigatório    |     Tipo de dado     | Regra |
+|-----------------------------|--------------------------------------------|--------------------|----------------------|-------|
+| tokenJWT                    | Token gerado pelo cliente                  | Sim                |  string              | -     |
 
 
 ## Mapeamento de saída
 
-|        Tag SPPIDIMW         |              Desctição             |     Obrigatório    |     Tipo de dado     |  Regra |
-|-----------------------------|------------------------------------|--------------------|----------------------|--------|
-| equipament_id               | Identificador unico do equipamento | Sim                |  string              |  -     |
-| client_id                   | ID do cliente responsável          | Sim                |  string              |  -     |
-| cam_description             | Descrição da câmera                | Sim                |  string              |  -     |
-| cam_model                   | Modelo da câmera                   | Sim                |  string              |  -     |
+|        Tag SPPIDIMW         | Desctição |     Obrigatório    |     Tipo de dado     |  Regra |
+|-----------------------------|-----------|--------------------|----------------------|--------|
 
 
 
@@ -98,13 +89,13 @@ HTTP/1.1 204
 
 | Codigo PMID | Condição / Código retornado do banco  |
 |-------------|---------------------------------------|
-| HTTP 204	  | SE DB_Response[OUT] == Sucesso        |
+| HTTP 200	  | SE DB_Response[OUT] == Sucesso        |
 
 ### Condição de Erro
 
 | Codigo PMID |         Condição / Código retornado do banco          |
 |-------------|-------------------------------------------------------|
-| HTTP 409	  | SE DB_Response[OUT] == Constante única violada        |
+| HTTP 401	  | SE DB_Response[OUT] == Retorno vazio                  |
 | HTTP 412	  | SE tags obrigatórias não foram enviadas               |
 | HTTP 550	  | Erro genérico                                         |
 
