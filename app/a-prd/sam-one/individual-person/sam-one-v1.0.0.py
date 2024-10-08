@@ -5,6 +5,8 @@ from datetime import datetime
 import psycopg2
 import os, json
 import threading
+import jwt
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 # Configuração do logger com formatação personalizada
 class CustomFormatter(logging.Formatter):
@@ -54,27 +56,36 @@ client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
 
-db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
-db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
-db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
-db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
-db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
+serviceName = os.environ.get('SVC-NAME', 'sam-one')
+servicePort = os.environ.get('SVC-PORT', '5001')
+SECRET_KEY = os.environ.get('SECRET-KEY', 'jwt-secret-key')
 
-serviceName = os.environ.get('SVC-NAME', 'r-cam-unique-person-info')
 
-db_connection = psycopg2.connect(host=db_postgres_host,
-                                 port=db_postgres_port,
-                                 user='root',
-                                 password=db_postgres_password,
-                                 database=db_postgres_database
-                                )
-cursor = db_connection.cursor()
 
 def send_logs_es(doc):
     client.index(index=es_index, document=doc)
+    
+def decode_jwt(token):
+    try:
+        print(token)
+        # Converte o token para bytes
+        token_bytes = token.encode('utf-8')
+
+        # Decodificando o token (passando bytes diretamente)
+        decoded_token = jwt.decode(token_bytes, SECRET_KEY, algorithms=["HS256"])
+        return decoded_token
+    except ExpiredSignatureError as e:
+        print(f"O token expirou: {str(e)}")
+        return False
+    except InvalidTokenError as e:
+        print(f"O token é inválido: {str(e)}")
+        return False
+    except Exception as e:
+        print(f"Ocorreu um erro ao decodificar o token: {str(e)}")
+        return False
 
 @app.route('/access/v1/valid-sam-one', methods=['POST'])
-def svc_r_cam_info():
+def svc_sam_one():
     start_time = datetime.now()  # Captura o início da execução
     message_id = request.headers.get('messageId', None)
     header_client_id = request.headers.get('clientId', None)
@@ -197,7 +208,8 @@ def svc_r_cam_info():
     thread.start()
         
     
-    if ('cam_id' not in body) or ('client_id' not in body):
+    if 'jwtToken' not in body or 'clientID' not in body or 'alarmID' not in body:
+        error_message = 'missing mandatory fields'
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
@@ -226,8 +238,9 @@ def svc_r_cam_info():
         return jsonify(error_message), 400   
     
     logger.debug(f'{message_id} | - | starting body conversion to variables')
-    cam_id = body.get('cam_id')
-    request_client_id = body.get('client_id')
+    jtwToken = body.get('jwtToken')
+    clientID = body.get('clientID')
+    alarmId = body.get('alarmId')
     logger.debug(f'{message_id} | - | body converted to variables')
     
     logger.info(f'{message_id} | - | starting select data from database')
@@ -235,7 +248,7 @@ def svc_r_cam_info():
     doc = {
         'timestamp': datetime.now(),
         'environment': 'b-prd',
-        'text': 'starting query into database',
+        'text': 'starting convertion JWT Token',
         'tid': message_id,
         'serviceName': serviceName,
     }
@@ -243,12 +256,11 @@ def svc_r_cam_info():
     thread.start()
         
     try:
-        cursor.execute(f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'")
-        cam_info = (cursor.fetchall())
+        token = decode_jwt(jtwToken)
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"{token}'",
             'tid': message_id,
             'serviceName': serviceName,
         }
@@ -259,7 +271,7 @@ def svc_r_cam_info():
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'text': f"SELECT * FROM unique_person_cam WHERE cam_id='{cam_id}' AND client_id='{request_client_id}'",
+            'text': f"ERROR TO CONVERT JWT TOKEN",
             'tid': message_id,
             'serviceName': serviceName,
             'responseHttpStatus': 500
@@ -270,44 +282,64 @@ def svc_r_cam_info():
         logger.error(f'{message_id} | - | httpStatus | - | 500')
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
         logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-        return ({'response':f'{response_error}'}), 500
-    if not cam_info:
+        return (response_error), 500
+    if not token:
         total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        error_message = 'Invalid Access Token'
         doc = {
             'timestamp': datetime.now(),
             'environment': 'b-prd',
-            'requestPayloadReturned': '',
+            'requestPayloadReturned': error_message,
             'tid': message_id,
             'serviceName': serviceName,
             'totalTime': total_time,
-            'responseHttpStatus': 204
+            'responseHttpStatus': 401
         }
         thread = threading.Thread(target=send_logs_es, args=(doc,))
         thread.start()
-        logger.info(f'{message_id} | - | payloadReturn | - | ')
-        logger.info(f'{message_id} | - | httpStatus | - | 204')
+        logger.info(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.info(f'{message_id} | - | httpStatus | - | 401')
         logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-        return ({'response':f'{cam_info}'}), 204
-         
+        return (error_message), 401
+        
+    if token['clientID'] != clientID or token['alarmID'] == alarmId:
+        total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+        error_message = 'Invalid credentials'
+        doc = {
+            'timestamp': datetime.now(),
+            'environment': 'b-prd',
+            'requestPayloadReturned': error_message,
+            'tid': message_id,
+            'serviceName': serviceName,
+            'totalTime': total_time,
+            'responseHttpStatus': 401
+        }
+        thread = threading.Thread(target=send_logs_es, args=(doc,))
+        thread.start()
+        logger.info(f'{message_id} | - | payloadReturn | - | {error_message}')
+        logger.info(f'{message_id} | - | httpStatus | - | 401')
+        logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+        return error_message, 401
+    
     total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
     doc = {
         'timestamp': datetime.now(),
         'environment': 'b-prd',
-        'requestPayloadReturned': json.dumps({'response':f'{cam_info}'}),
+        'requestPayloadReturned': '',
         'tid': message_id,
         'serviceName': serviceName,
         'totalTime': total_time,
-        'responseHttpStatus': 200
+        'responseHttpStatus': 204
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
-    logger.info(f'{message_id} | - | payloadReturn | - | {cam_info}')
-    logger.info(f'{message_id} | - | httpStatus | - | 200')
+    logger.info(f'{message_id} | - | payloadReturn | - | ')
+    logger.info(f'{message_id} | - | httpStatus | - | 204')
     total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
     logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-    return ({'response':f'{cam_info}'}), 200
+    return '', 204
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=servicePort)

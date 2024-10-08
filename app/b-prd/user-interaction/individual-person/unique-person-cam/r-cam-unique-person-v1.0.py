@@ -54,6 +54,7 @@ es_index = os.environ.get('ES-INDEX', 'backend')
 client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
+r_cam_unique_person_port = os.environ.get('PORT', '5003')
 
 db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
 db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
@@ -329,4 +330,4 @@ def svc_r_cam_info():
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=r_cam_unique_person_port)

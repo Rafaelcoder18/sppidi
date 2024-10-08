@@ -198,7 +198,7 @@ def svc_r_cam_info():
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
         
-    
+
     if ('cpf' not in body) or ('full_name' not in body) or ('phone_numer' not in body) or ('first_contact_name' not in body) or ('first_contact_phone_numer' not in body) or ('second_contact_name' not in body) or ('second_contact_phone_numer' not in body) or ('client_id' not in body) or ('contract_id' not in body) or ('user_name' not in body) or ('user_password' not in body) or ('zip_code' not in body) or ('address_number' not in body):   
         error_message = {'error':'Missing mandatory fields'}
         doc = {
@@ -335,4 +335,4 @@ def svc_r_cam_info():
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5003)

@@ -54,6 +54,7 @@ es_index = os.environ.get('ES-INDEX', 'backend')
 client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
+r_unique_person_port = os.environ.get('PORT', '5002')
 
 db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
 db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
@@ -201,38 +202,41 @@ def svc_r_cam_info():
     
     if 'cpf' not in body:
         if 'full_name' not in body:   
-            error_message = {'error':'Missing mandatory fields'}
-            doc = {
-                'timestamp': datetime.now(),
-                'environment': 'b-prd',
-                'providerHeaderReceived': header_info,
-                'requestMethod': 'POST',
-                'tid': message_id,
-                'serviceName': f'{serviceName}',
-            }
-            thread = threading.Thread(target=send_logs_es, args=(doc,))
-            thread.start()
-            total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
-            doc = {
-                'timestamp': datetime.now(),
-                'environment': 'b-prd',
-                'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
-                'tid': message_id,
-                'serviceName': f'{serviceName}',
-                'totalTime': total_time,
-                'responseHttpStatus': 400
-            }
-            logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
-            logger.error(f'{message_id} | - | httpStatus | - | 400')
-            total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
-            logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
-            return jsonify(error_message), 400   
+            if 'client_id' not in body:   
+                error_message = {'error':'Missing mandatory fields'}
+                doc = {
+                    'timestamp': datetime.now(),
+                    'environment': 'b-prd',
+                    'providerHeaderReceived': header_info,
+                    'requestMethod': 'POST',
+                    'tid': message_id,
+                    'serviceName': f'{serviceName}',
+                }
+                thread = threading.Thread(target=send_logs_es, args=(doc,))
+                thread.start()
+                total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+                doc = {
+                    'timestamp': datetime.now(),
+                    'environment': 'b-prd',
+                    'requestPayloadReturned': json.dumps({'response':f'{error_message}'}),
+                    'tid': message_id,
+                    'serviceName': f'{serviceName}',
+                    'totalTime': total_time,
+                    'responseHttpStatus': 400
+                }
+                logger.error(f'{message_id} | - | payloadReturn | - | {error_message}')
+                logger.error(f'{message_id} | - | httpStatus | - | 400')
+                total_time = int((datetime.now() - start_time).total_seconds() * 1000)  # Calcula o tempo total de execução em ms
+                logger.info(f'{message_id} | - | totalExecutionTime | - | {total_time} ms')
+                return jsonify(error_message), 400   
     
     logger.debug(f'{message_id} | - | starting body conversion to variables')
     if 'cpf' not in body:
         full_name = body.get('full_name')
     if 'full_name' not in body: 
         cpf = body.get('cpf')
+    if 'full_name' not in body and 'cpf' not in body: 
+        client_id = body.get('client_id')
 
        
     logger.debug(f'{message_id} | - | body converted to variables')
@@ -250,17 +254,19 @@ def svc_r_cam_info():
     thread.start()
         
     try:
-        if 'full_name' not in body: 
+        if 'full_name' not in body and 'client_id' not in body: 
             cursor.execute(f"SELECT * FROM unique_person WHERE cpf='{cpf}'")
-        if 'cpf' not in body: 
+        if 'cpf' not in body and 'client_id' not in body:  
             cursor.execute(f"SELECT * FROM unique_person WHERE full_name='{full_name}'")
+        elif 'full_name' not in body and 'cpf' not in body: 
+            cursor.execute(f"SELECT * FROM unique_person WHERE client_id='{client_id}'")
         try:
             client_response = cursor.fetchone()
         except:
             client_response = []
         if client_response == None:
             response_error = {"error":"cliente inexistente"}
-            if 'full_name' not in body: 
+            if 'full_name' not in body and 'client_id' not in body: 
                 doc = {
                     'timestamp': datetime.now(),
                     'environment': 'b-prd',
@@ -268,11 +274,19 @@ def svc_r_cam_info():
                     'tid': message_id,
                     'serviceName': serviceName,
                 }
-            else:
+            if 'cpf' not in body and 'client_id' not in body:  
                 doc = {
                     'timestamp': datetime.now(),
                     'environment': 'b-prd',
                     'text': f"SELECT * FROM unique_person WHERE full_name='{full_name}'",
+                    'tid': message_id,
+                    'serviceName': serviceName,
+                }
+            elif 'full_name' not in body and 'cpf' not in body: 
+                doc = {
+                    'timestamp': datetime.now(),
+                    'environment': 'b-prd',
+                    'text': f"SELECT * FROM unique_person WHERE client_id='{client_id}'",
                     'tid': message_id,
                     'serviceName': serviceName,
                 }
@@ -352,4 +366,4 @@ def svc_r_cam_info():
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=r_unique_person_port)
