@@ -28,7 +28,7 @@ def generate_jwt(payload, exp_minutes=300):
 if __name__ == "__main__":
     # Definindo um payload de exemplo
     payload = {
-        "clientID": 'cliente_123',
+        "clientID": 'client123',
         "alarmID": "teste"
     }
 

@@ -76,7 +76,7 @@ Mensagem (JSON) de resposta
 |----------------|--------------------------------|-----------|-------------------------------------------------|-----------|------------------|
 | 1              | sam-one                        | HTTP      | Executar sempre                                 | SYNC      | request          |
 | 2              | r-unique-person                | HTTP      | Executar se sucesso no step sam-one             | SYNC      | request          |
-| 3              | r-alarm-unique-person            | HTTP      | Executar se sucesso no step r-unique-person     | SYNC      | request          |
+| 3              | r-alarm-unique-person          | HTTP      | Executar se sucesso no step r-unique-person     | SYNC      | request          |
 | 4              | orch-intrusion-alarm-activated | HTTP      | Executar se sucesso no step r-alarm-unique-person | SYNC      | request          |
 
 ### Regras

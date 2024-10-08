@@ -5,6 +5,7 @@ from datetime import datetime
 import requests
 import os, json
 import threading
+import ast
 
 # Configuração do logger com formatação personalizada
 class CustomFormatter(logging.Formatter):
@@ -47,7 +48,7 @@ logger.addHandler(file_handler)
 
 app = Flask(__name__)
 
-es_host = os.environ.get('ES-HOST', '192.168.15.4')
+es_host = os.environ.get('ES-HOST', '177.102.240.150')
 es_port = os.environ.get('ES-PORT', '9200')
 es_index = os.environ.get('ES-INDEX', 'backend')
 client = Elasticsearch7([f'http://{es_host}:{es_port}'])
@@ -73,7 +74,8 @@ orch_fire_alarm_activated_port = os.environ.get('ORCH-FIRE-ALARM-ACTIVATED-PORT'
 orch_fire_alarm_activated_uri = os.environ.get('ORCH-FIRE-ALARM-ACTIVATED-URI', '/access/v1/orch-fire-alarm-activated')
 
 def send_logs_es(doc):
-    client.index(index=es_index, document=doc)
+    #client.index(index=es_index, document=doc)
+    pass
 
 @app.route('/access/v1/orch-fire-detection-alarm', methods=['POST'])
 def svc_r_cam_info():
@@ -409,6 +411,12 @@ def svc_r_cam_info():
                     cam_info = requests.post(url, headers=headers, data=json.dumps(data))
                     if cam_info.status_code == 200:
                         logger.info(f'{message_id} | - | orcg-fire-alarm-activated')
+                        cam_info_data = list(ast.literal_eval(cam_info.json()['success']))
+                        mensagem = f'''🚨🚨🚨 Atenção!! 🚨🚨🚨 
+    Um alarme de incêndio foi acionado. informações do alarme:
+    Descrição do equipamento: {cam_info.json()['success'][2]}
+    Modelo da câmera: {cam_info.json()['success'][3]}
+    Horário do alarme: {datetime.now()}'''
         
                         doc = {
                             'timestamp': datetime.now(),
@@ -432,7 +440,9 @@ def svc_r_cam_info():
 
                             # Corpo da requisição (payload)
                             data = {
-                                'cam_id': f'{equipament_id}'
+                                'cam_id': f'{equipament_id}',
+                                'client_id': f'{request_client_id}',
+                                'responsible_person':[[contact_name_1, contact_phone_1, mensagem],[contact_name_2, contact_phone_2, mensagem]]
                             }
                             orch_fire_alarm_activated = requests.post(url, headers=headers, data=json.dumps(data))
                         except Exception as e:

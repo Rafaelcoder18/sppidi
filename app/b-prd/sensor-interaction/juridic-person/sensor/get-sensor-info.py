@@ -58,13 +58,14 @@ serviceName = os.environ.get('SVC-NAME', 'r-sensor-juridic-person-info')
 
 db_postgres_host = os.environ.get('POSTGRES-HOST', 'localhost')
 db_postgres_port = os.environ.get('POSTGRES-PORT', '5432')
-db_postgres_user = os.environ.get('POSTGRES-USER', 'sppidi')
+db_postgres_user = os.environ.get('POSTGRES-USER', 'postgres')
+
 db_postgres_password = os.environ.get('POSTGRES-PASSWORD', 'sppidi')
 db_postgres_database = os.environ.get('POSTGRES-DATABASE', 'sppidi')
 
 db_connection = psycopg2.connect(host=db_postgres_host,
                                  port=db_postgres_port,
-                                 user='root',
+                                 user=db_postgres_user,
                                  password=db_postgres_password,
                                  database=db_postgres_database
                                 )

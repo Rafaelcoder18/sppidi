@@ -61,13 +61,14 @@ c_alarm_status_port = os.environ.get('C-ALARM-STATUS-PORT', '5001')
 c_alarm_status_uri = os.environ.get('C-ALARM-STATUS-URI', '/access/v1/c-alarm-status')
 
 send_message_host = os.environ.get('SEND-MESSAGE-HOST', 'localhost')
-send_message_port = os.environ.get('SEND-MESSAGE-PORT', '5002')
+send_message_port = os.environ.get('SEND-MESSAGE-PORT', '5005')
 send_message_uri = os.environ.get('SEND-MESSAGE-URI', '/access/v1/send-message')
 
 
 def send_logs_es(doc):
-    client.index(index=es_index, document=doc)
-
+    #client.index(index=es_index, document=doc)
+    pass
+    
 @app.route('/access/v1/orch-fire-alarm-activated', methods=['POST'])
 def svc_r_cam_info():
     start_time = datetime.now()  # Captura o início da execução
@@ -192,7 +193,6 @@ def svc_r_cam_info():
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
         
-    print(body)
     if ('cam_id' not in body) or ('client_id' not in body) or ('responsible_person' not in body):
         error_message = 'missing mandatory fields'
         doc = {
@@ -227,7 +227,6 @@ def svc_r_cam_info():
     request_client_id = body.get('client_id')
     responsible_person = body.get('responsible_person')
     logger.debug(f'{message_id} | - | body converted to variables')
-    print(responsible_person)
     logger.info(f'{message_id} | - | calling sam-one')
     
     doc = {

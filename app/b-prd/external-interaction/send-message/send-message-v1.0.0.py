@@ -56,13 +56,14 @@ client = Elasticsearch7([f'http://{es_host}:{es_port}'])
 valid_client_ids = os.environ.get('VALID-CLIENT-IDS', ['client1', 'client2', 'client3'])
 
 serviceName = os.environ.get('SVC-NAME', 'send-message')
-servicePort = os.environ.get('SVC-PORT', '5001')
+servicePort = os.environ.get('SVC-PORT', '5005')
 
 waapi_instance = os.environ.get('WAAP-INSTANCE', '21971')
 waapi_token = os.environ.get('WAAPI-TOKEN', 'cMtj1lLbTbWddy6njIaSwQ8p3ccwimOtI9HcoHPV1a603f10')
 
 def send_logs_es(doc):
-    client.index(index=es_index, document=doc)
+    #client.index(index=es_index, document=doc)
+    pass
     
 
 @app.route('/access/v1/send-message', methods=['POST'])
@@ -218,7 +219,7 @@ def svc_sam_one():
         return jsonify(error_message), 400   
     
     logger.debug(f'{message_id} | - | starting body conversion to variables')
-    responsible_person = body.get('responsible_person')
+    responsible_person = list(eval(body.get('responsible_person')))
     logger.debug(f'{message_id} | - | body converted to variables')
     
     logger.info(f'{message_id} | - | calling WAAPI to send message')
@@ -232,7 +233,6 @@ def svc_sam_one():
     }
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
-        
     try:
         for costumer in responsible_person:
             url = f"https://waapi.app/api/v1/instances/{waapi_instance}/client/action/send-message"
