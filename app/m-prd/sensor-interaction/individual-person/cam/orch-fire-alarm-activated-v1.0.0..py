@@ -192,7 +192,7 @@ def svc_r_cam_info():
     thread = threading.Thread(target=send_logs_es, args=(doc,))
     thread.start()
         
-    
+    print(body)
     if ('cam_id' not in body) or ('client_id' not in body) or ('responsible_person' not in body):
         error_message = 'missing mandatory fields'
         doc = {
@@ -227,7 +227,7 @@ def svc_r_cam_info():
     request_client_id = body.get('client_id')
     responsible_person = body.get('responsible_person')
     logger.debug(f'{message_id} | - | body converted to variables')
-    
+    print(responsible_person)
     logger.info(f'{message_id} | - | calling sam-one')
     
     doc = {

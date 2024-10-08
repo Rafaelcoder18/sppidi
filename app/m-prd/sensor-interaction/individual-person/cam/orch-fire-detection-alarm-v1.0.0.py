@@ -432,9 +432,7 @@ def svc_r_cam_info():
 
                             # Corpo da requisição (payload)
                             data = {
-                                'responsible_person': f'[
-                                    
-                                ]'
+                                'cam_id': f'{equipament_id}'
                             }
                             orch_fire_alarm_activated = requests.post(url, headers=headers, data=json.dumps(data))
                         except Exception as e:
